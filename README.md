@@ -4,20 +4,13 @@ Board Game Paradise deck builder for Magic: The Gathering, built with React + Vi
 
 ## Package manager
 
-This project uses **pnpm**. Install it once if you don't have it:
-
-```bash
-npm install -g pnpm
-# or via corepack (Node 16+):
-corepack enable
-corepack prepare pnpm@latest --activate
-```
+This project uses **npm** (comes pre-installed with Node.js).
 
 ## Quick start
 
 ```bash
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```
 
 Open http://localhost:5173/bgp-deck-builder/
@@ -25,8 +18,8 @@ Open http://localhost:5173/bgp-deck-builder/
 ## Build for production
 
 ```bash
-pnpm build
-pnpm preview
+npm run build
+npm run preview
 ```
 
 ## Deploy to GitHub Pages
@@ -38,7 +31,7 @@ pnpm preview
 
 Or deploy manually:
 ```bash
-pnpm build
+npm run build
 # Upload the dist/ folder to your hosting
 ```
 

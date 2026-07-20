@@ -23,8 +23,6 @@
   },
   "homepage": "https://Rafa-romero-dev.github.io/bgp-deck-builder",
   "engines": {
-    "node": ">=22.0.0",
-    "pnpm": ">=9.0.0"
-  },
-  "packageManager": "pnpm@11.15.1"
+    "node": ">=22.0.0"
+  }
 }
