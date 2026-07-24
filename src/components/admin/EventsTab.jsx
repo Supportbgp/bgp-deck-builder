@@ -6,28 +6,32 @@ import { FORMATS } from '../../utils/constants'
 const EMPTY_FORM = { name:'', date:'', time:'18:00', format:'standard', location:'', notes:'' }
 
 export default function EventsTab() {
-  const { events, setEvents, submissions } = useAdmin()
+  const { events, addEvent, updateEvent, deleteEvent, submissions } = useAdmin()
   const [form, setForm]       = useState(EMPTY_FORM)
   const [editId, setEditId]   = useState(null)
   const [errors, setErrors]   = useState({})
+  const [saving, setSaving]   = useState(false)
   const sorted = [...events].sort((a,b) => a.date.localeCompare(b.date))
   const subCounts = {}; submissions.forEach(s => { subCounts[s.event_id] = (subCounts[s.event_id]||0)+1 })
 
   const load = (ev) => { setForm({ name:ev.name, date:ev.date, time:ev.time||'18:00', format:ev.format, location:ev.location||'', notes:ev.notes||'' }); setEditId(ev.id); setErrors({}) }
   const clear = () => { setForm(EMPTY_FORM); setEditId(null); setErrors({}) }
 
-  const save = () => {
+  const save = async () => {
     const e = {}
     if (!form.name.trim()) e.name = 'Name is required.'
     if (!form.date)        e.date = 'Date is required.'
     if (Object.keys(e).length) { setErrors(e); return }
     const ev = { ...form, id: editId || genId(), location: form.location || 'BGP — Main store' }
-    setEvents(editId ? events.map(x => x.id === editId ? ev : x) : [...events, ev])
+    setSaving(true)
+    const error = editId ? await updateEvent(ev) : await addEvent(ev)
+    setSaving(false)
+    if (error) { setErrors({ name: 'Could not save event. Try again.' }); return }
     clear()
   }
 
-  const del = (id, name) => {
-    if (confirm(`Delete "${name}"? Submissions will remain.`)) setEvents(events.filter(e => e.id !== id))
+  const del = async (id, name) => {
+    if (confirm(`Delete "${name}"? Submissions will remain.`)) await deleteEvent(id)
   }
 
   return (
@@ -71,7 +75,7 @@ export default function EventsTab() {
         <div className="field"><label>Notes</label><textarea value={form.notes} onChange={e => setForm(f=>({...f,notes:e.target.value}))} placeholder="Entry fee, prize structure, special rules…" rows={2} /></div>
         <div style={{ display:'flex', gap:8, marginTop:4 }}>
           {editId && <button className="btn ghost" onClick={clear}>Cancel edit</button>}
-          <button className="btn primary" onClick={save}>{editId ? 'Update event' : 'Save event'}</button>
+          <button className="btn primary" onClick={save} disabled={saving}>{saving ? 'Saving…' : editId ? 'Update event' : 'Save event'}</button>
         </div>
       </div>
     </div>

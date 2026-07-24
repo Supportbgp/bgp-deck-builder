@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { DeckProvider } from './context/DeckContext'
 import { AdminProvider } from './context/AdminContext'
+import { AuthProvider } from './context/AuthContext'
 import { UIProvider } from './context/UIContext'
 import Topbar from './components/layout/Topbar'
 import SearchPanel from './components/search/SearchPanel'
@@ -37,6 +38,9 @@ function AppInner() {
         if (deckName) setDeckName(deckName)
         if (format)   setFormat(format)
         setMain(main); setSide(side)
+        // Clear the processed share-link hash so a refresh doesn't reload it every time
+        // and so it can never be confused with an unrelated URL fragment later.
+        history.replaceState(null, '', window.location.pathname + window.location.search)
       })
     }
   }, [])
@@ -106,11 +110,13 @@ function AppInner() {
 export default function App() {
   return (
     <DeckProvider>
-      <AdminProvider>
-        <UIProvider>
-          <AppInner />
-        </UIProvider>
-      </AdminProvider>
+      <AuthProvider>
+        <AdminProvider>
+          <UIProvider>
+            <AppInner />
+          </UIProvider>
+        </AdminProvider>
+      </AuthProvider>
     </DeckProvider>
   )
 }

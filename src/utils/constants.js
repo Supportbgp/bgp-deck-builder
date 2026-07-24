@@ -50,14 +50,5 @@ export const SUBMISSION_STATUS = {
 }
 
 export const LS_KEYS = {
-  EVENTS:  'bgp_events_v1',
-  SUBS:    'bgp_subs_v1',
   WEBHOOK: 'bgp_webhook_v1',
-  AUTH:    'bgp_admin_auth_v1',
 }
-
-export const SEED_EVENTS = [
-  { id: 'ev1', name: 'Friday Night Magic — Modern',  date: '2026-08-01', time: '18:00', format: 'modern',    location: 'BGP — Main store', notes: 'Entry $10. Top 8 prizing.' },
-  { id: 'ev2', name: 'Commander Night',              date: '2026-08-03', time: '14:00', format: 'commander', location: 'BGP — Main store', notes: 'Casual pods, no entry fee.' },
-  { id: 'ev3', name: 'Standard Showdown',            date: '2026-08-08', time: '17:00', format: 'standard',  location: 'BGP — Main store', notes: 'WPN promo packs.' },
-]

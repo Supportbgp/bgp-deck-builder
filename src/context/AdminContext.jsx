@@ -1,41 +1,88 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
-import { storage } from '../utils/storage'
+import { supabase } from '../utils/supabaseClient'
 
 const AdminContext = createContext(null)
 export const useAdmin = () => useContext(AdminContext)
 
+function upsertById(list, row) {
+  const idx = list.findIndex(e => e.id === row.id)
+  if (idx === -1) return [...list, row]
+  return list.map(e => e.id === row.id ? row : e)
+}
+
 export function AdminProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [adminOpen, setAdminOpen]             = useState(false)
-  const [events, setEventsState]              = useState(() => storage.getEvents())
-  const [submissions, setSubsState]           = useState(() => storage.getSubs())
+  const [adminOpen, setAdminOpen] = useState(false)
+  const [events, setEvents]       = useState([])
+  const [submissions, setSubs]    = useState([])
+  const [loading, setLoading]     = useState(true)
 
-  const setEvents = useCallback((data) => {
-    setEventsState(data)
-    storage.setEvents(data)
+  useEffect(() => {
+    let cancelled = false
+
+    Promise.all([
+      supabase.from('events').select('*'),
+      supabase.from('submissions').select('*'),
+    ]).then(([ev, subs]) => {
+      if (cancelled) return
+      setEvents(ev.data || [])
+      setSubs(subs.data || [])
+      setLoading(false)
+    })
+
+    const channel = supabase.channel('bgp-admin-data')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, payload => {
+        if (payload.eventType === 'DELETE') setEvents(prev => prev.filter(e => e.id !== payload.old.id))
+        else setEvents(prev => upsertById(prev, payload.new))
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions' }, payload => {
+        if (payload.eventType === 'DELETE') setSubs(prev => prev.filter(s => s.id !== payload.old.id))
+        else setSubs(prev => upsertById(prev, payload.new))
+      })
+      .subscribe()
+
+    return () => { cancelled = true; supabase.removeChannel(channel) }
   }, [])
 
-  const setSubs = useCallback((data) => {
-    setSubsState(data)
-    storage.setSubs(data)
+  const addEvent = useCallback(async (event) => {
+    const { data, error } = await supabase.from('events').insert(event).select().single()
+    if (!error) setEvents(prev => upsertById(prev, data))
+    return error
   }, [])
 
-  const login = useCallback((email, password) => {
-    const stored = storage.getAuth()
-    if (!stored) return 'No admin account set up. Use first-run setup.'
-    if (stored.email !== email.toLowerCase().trim()) return 'Invalid email or password.'
-    // Simple hash check — bcryptjs compare
-    try {
-      const bcrypt = window._bcrypt
-      if (bcrypt && !bcrypt.compareSync(password, stored.hash)) return 'Invalid email or password.'
-    } catch {}
-    setIsAuthenticated(true)
-    return null
+  const updateEvent = useCallback(async (event) => {
+    const { data, error } = await supabase.from('events').update(event).eq('id', event.id).select().single()
+    if (!error) setEvents(prev => upsertById(prev, data))
+    return error
   }, [])
 
-  const logout = useCallback(() => {
-    setIsAuthenticated(false)
-    setAdminOpen(false)
+  const deleteEvent = useCallback(async (id) => {
+    const { error } = await supabase.from('events').delete().eq('id', id)
+    if (!error) setEvents(prev => prev.filter(e => e.id !== id))
+    return error
+  }, [])
+
+  const clearEvents = useCallback(async () => {
+    const { error } = await supabase.from('events').delete().neq('id', '')
+    if (!error) setEvents([])
+    return error
+  }, [])
+
+  const updateSubmissionStatus = useCallback(async (id, status) => {
+    const { data, error } = await supabase.from('submissions').update({ status }).eq('id', id).select().single()
+    if (!error) setSubs(prev => upsertById(prev, data))
+    return error
+  }, [])
+
+  const addSubmission = useCallback(async (submission) => {
+    const { data, error } = await supabase.from('submissions').insert(submission).select().single()
+    if (!error) setSubs(prev => upsertById(prev, data))
+    return error
+  }, [])
+
+  const clearSubmissions = useCallback(async () => {
+    const { error } = await supabase.from('submissions').delete().neq('id', '')
+    if (!error) setSubs([])
+    return error
   }, [])
 
   const openAdmin = useCallback(() => {
@@ -43,20 +90,17 @@ export function AdminProvider({ children }) {
     document.body.style.overflow = 'hidden'
   }, [])
 
-  const closeAdmin = useCallback((lock = false) => {
+  const closeAdmin = useCallback(() => {
     setAdminOpen(false)
     document.body.style.overflow = ''
-    if (lock) setIsAuthenticated(false)
   }, [])
-
-  const hasAdminAccount = useCallback(() => !!storage.getAuth(), [])
 
   return (
     <AdminContext.Provider value={{
-      isAuthenticated, adminOpen,
-      events, setEvents,
-      submissions, setSubs,
-      login, logout, openAdmin, closeAdmin, hasAdminAccount,
+      adminOpen, openAdmin, closeAdmin,
+      events, addEvent, updateEvent, deleteEvent, clearEvents,
+      submissions, updateSubmissionStatus, addSubmission, clearSubmissions,
+      loading,
     }}>
       {children}
     </AdminContext.Provider>

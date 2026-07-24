@@ -1,11 +1,13 @@
 import { useAdmin } from '../../context/AdminContext'
+import { useAuth } from '../../context/AuthContext'
 import { useDeck } from '../../context/DeckContext'
 import { FORMATS } from '../../utils/constants'
 import logo from '/BGP_Logo_White.png'
 
 export default function Topbar() {
   const { format, setFormat } = useDeck()
-  const { isAuthenticated, openAdmin } = useAdmin()
+  const { openAdmin } = useAdmin()
+  const { isAdmin } = useAuth()
 
   return (
     <div style={{ display:'flex', alignItems:'center', gap:10, padding:'0 16px', height:52, background:'var(--bgp-navy)', borderBottom:'2px solid var(--bgp-teal)', flexShrink:0 }}>
@@ -15,7 +17,7 @@ export default function Topbar() {
       <div style={{ flex:1 }} />
       <button
         onClick={() => openAdmin()}
-        style={{ fontSize:11, padding:'4px 10px', borderRadius:5, border:'1px solid rgba(255,255,255,0.2)', background: isAuthenticated ? 'var(--bgp-gold)' : 'transparent', color: isAuthenticated ? 'var(--bgp-navy)' : 'rgba(255,255,255,0.5)', cursor:'pointer', fontWeight: isAuthenticated ? 600 : 400 }}
+        style={{ fontSize:11, padding:'4px 10px', borderRadius:5, border:'1px solid rgba(255,255,255,0.2)', background: isAdmin ? 'var(--bgp-gold)' : 'transparent', color: isAdmin ? 'var(--bgp-navy)' : 'rgba(255,255,255,0.5)', cursor:'pointer', fontWeight: isAdmin ? 600 : 400 }}
       >
         ⚙ Admin
       </button>

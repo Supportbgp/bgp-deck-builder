@@ -10,7 +10,7 @@ import { isUpcoming, fmtDate } from '../../utils/dateUtils'
 
 export default function SubmitModal({ onClose }) {
   const { main, side, format, deckName } = useDeck()
-  const { events, setSubs, submissions } = useAdmin()
+  const { events, addSubmission } = useAdmin()
   const { openModal } = useUI()
   const [playerName, setPlayerName] = useState('')
   const [discord, setDiscord]       = useState('')
@@ -43,7 +43,12 @@ export default function SubmitModal({ onClose }) {
       card_list: main.map(e => `${e.qty}x ${e.card.name}`).join(', '),
       status: 'registered',
     }
-    setSubs([...submissions, payload])
+    const error = await addSubmission(payload)
+    if (error) {
+      setErrors({ event: 'Could not submit — please try again.' })
+      setLoading(false)
+      return
+    }
     const webhook = storage.getWebhook()
     if (webhook) {
       try { await fetch(webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }) }

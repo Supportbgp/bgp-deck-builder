@@ -4,7 +4,7 @@ import { SUBMISSION_STATUS } from '../../utils/constants'
 import ResultsCardModal from './ResultsCardModal'
 
 export default function SubmissionsTab() {
-  const { submissions, setSubs, events } = useAdmin()
+  const { submissions, updateSubmissionStatus, events } = useAdmin()
   const [evFilter, setEvFilter]   = useState('')
   const [stFilter, setStFilter]   = useState('')
   const [search, setSearch]       = useState('')
@@ -30,7 +30,7 @@ export default function SubmissionsTab() {
     }
   }, [submissions])
 
-  const updateStatus = (id, status) => setSubs(submissions.map(s => s.id === id ? {...s, status} : s))
+  const updateStatus = (id, status) => updateSubmissionStatus(id, status)
 
   const exportCSV = () => {
     const cols = ['timestamp','player_name','discord','event_name','event_date','deck_name','format','archetype','main_count','status','card_list']
