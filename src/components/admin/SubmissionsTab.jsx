@@ -1,14 +1,14 @@
 import { useState, useMemo } from 'react'
 import { useAdmin } from '../../context/AdminContext'
-
-const STATUS_LABELS  = { registered:'Registered', checkedin:'Checked in', top8:'Top 8', top4:'Top 4', finalist:'Finalist', winner:'Winner' }
-const STATUS_COLORS  = { registered:['rgba(0,80,104,.12)','var(--bgp-teal)'], checkedin:['#d1fae5','#065f46'], top8:['#fef3c7','#92400e'], top4:['#fed7aa','#9a3412'], finalist:['#e0e7ff','#3730a3'], winner:['#fef9c3','#713f12'] }
+import { SUBMISSION_STATUS } from '../../utils/constants'
+import ResultsCardModal from './ResultsCardModal'
 
 export default function SubmissionsTab() {
   const { submissions, setSubs, events } = useAdmin()
   const [evFilter, setEvFilter]   = useState('')
   const [stFilter, setStFilter]   = useState('')
   const [search, setSearch]       = useState('')
+  const [pubSub, setPubSub]       = useState(null)
 
   const filtered = useMemo(() => submissions.filter(s => {
     if (evFilter && s.event_id !== evFilter) return false
@@ -58,7 +58,7 @@ export default function SubmissionsTab() {
         </select>
         <select value={stFilter} onChange={e => setStFilter(e.target.value)} style={{ fontSize:12, padding:'5px 9px', borderRadius:5, border:'1px solid var(--border-strong)', background:'var(--bgp-white)', color:'var(--bgp-text)', outline:'none' }}>
           <option value="">All statuses</option>
-          {Object.entries(STATUS_LABELS).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
+          {Object.entries(SUBMISSION_STATUS).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search player or deck…" style={{ fontSize:12, padding:'5px 9px', borderRadius:5, border:'1px solid var(--border-strong)', background:'var(--bgp-white)', color:'var(--bgp-text)', outline:'none', minWidth:180 }} />
         <button className="btn sm ghost" onClick={exportCSV}>Export CSV</button>
@@ -69,13 +69,13 @@ export default function SubmissionsTab() {
         : (
           <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
             <thead>
-              <tr>{['Player','Deck','Format','Event','Status','Time'].map(h => (
+              <tr>{['Player','Deck','Format','Event','Status','Time',''].map(h => (
                 <th key={h} style={{ textAlign:'left', fontSize:10, fontWeight:600, color:'var(--bgp-teal)', textTransform:'uppercase', letterSpacing:'.06em', padding:'8px 10px', borderBottom:'2px solid var(--bgp-teal)', whiteSpace:'nowrap' }}>{h}</th>
               ))}</tr>
             </thead>
             <tbody>
               {filtered.map(s => {
-                const [sbg, sco] = STATUS_COLORS[s.status||'registered'] || STATUS_COLORS.registered
+                const meta = SUBMISSION_STATUS[s.status||'registered'] || SUBMISSION_STATUS.registered
                 const evName = (events.find(e => e.id === s.event_id)||{}).name || s.event_name || '—'
                 const ts = s.timestamp ? new Date(s.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'
                 return (
@@ -91,11 +91,14 @@ export default function SubmissionsTab() {
                     <td style={{ padding:'8px 10px', color:'var(--bgp-text-2)' }}>{s.format||'—'}</td>
                     <td style={{ padding:'8px 10px', color:'var(--bgp-text-2)', maxWidth:160, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }} title={evName}>{evName}</td>
                     <td style={{ padding:'8px 10px' }}>
-                      <select value={s.status||'registered'} onChange={e => updateStatus(s.id, e.target.value)} style={{ fontSize:11, padding:'3px 6px', borderRadius:4, border:'1px solid var(--border-strong)', background:sbg, color:sco, cursor:'pointer', fontWeight:600 }}>
-                        {Object.entries(STATUS_LABELS).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
+                      <select value={s.status||'registered'} onChange={e => updateStatus(s.id, e.target.value)} style={{ fontSize:11, padding:'3px 6px', borderRadius:4, border:'1px solid var(--border-strong)', background:meta.bg, color:meta.fg, cursor:'pointer', fontWeight:600 }}>
+                        {Object.entries(SUBMISSION_STATUS).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
                       </select>
                     </td>
                     <td style={{ padding:'8px 10px', fontSize:11, color:'var(--bgp-text-3)', whiteSpace:'nowrap' }}>{ts}</td>
+                    <td style={{ padding:'8px 10px', whiteSpace:'nowrap' }}>
+                      {meta.topping && <button className="btn sm ghost" onClick={() => setPubSub(s)}>Publish results</button>}
+                    </td>
                   </tr>
                 )
               })}
@@ -103,6 +106,7 @@ export default function SubmissionsTab() {
           </table>
         )
       }
+      {pubSub && <ResultsCardModal submission={pubSub} onClose={() => setPubSub(null)} />}
     </div>
   )
 }
