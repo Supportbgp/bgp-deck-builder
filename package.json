@@ -21,7 +21,7 @@
     "oxlint": "1.71.0",
     "vite": "8.1.1"
   },
-  "homepage": "https://Rafa-romero-dev.github.io/bgp-deck-builder",
+  "homepage": "https://supportbgp.github.io/bgp-deck-builder/",
   "engines": {
     "node": ">=22.0.0"
   }
