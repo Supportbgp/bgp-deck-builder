@@ -1,4 +1,5 @@
 import { TYPE_ORDER, ARCHETYPES, FORMATS } from './constants'
+import { fetchCardByName } from './scryfall'
 
 export function cardType(card) {
   const t = (card.type_line || '').toLowerCase()
@@ -63,6 +64,22 @@ export function encodeDeck(main, side, deckName, format) {
   const sbParts = side.map(e => `${e.card.id}:${e.qty}s`)
   const meta = encodeURIComponent(`${deckName}|${format}`)
   return `deck=${meta}&cards=${encodeURIComponent([...parts, ...sbParts].join(','))}`
+}
+
+export function parseCardListString(str) {
+  return (str || '').split(',').map(s => s.trim()).filter(Boolean).map(part => {
+    const m = part.match(/^(\d+)x?\s+(.+)$/i)
+    return m ? { qty: parseInt(m[1]), name: m[2].trim() } : null
+  }).filter(Boolean)
+}
+
+export async function fetchEntriesForSubmission(submission) {
+  const parsed = parseCardListString(submission.card_list)
+  const results = await Promise.all(parsed.map(async p => {
+    const card = await fetchCardByName(p.name).catch(() => null)
+    return card ? { card, qty: p.qty } : null
+  }))
+  return results.filter(Boolean)
 }
 
 export async function decodeDeck(hash) {

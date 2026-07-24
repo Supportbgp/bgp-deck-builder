@@ -40,6 +40,15 @@ export const BGP = {
   TEXT3:   '#4a7080',
 }
 
+export const SUBMISSION_STATUS = {
+  registered: { label: 'Registered', bg: 'rgba(0,80,104,.12)', fg: 'var(--bgp-teal)', topping: false },
+  checkedin:  { label: 'Checked in', bg: '#d1fae5', fg: '#065f46', topping: false },
+  top8:       { label: 'Top 8',      bg: '#fef3c7', fg: '#92400e', topping: true, emoji: '▲' },
+  top4:       { label: 'Top 4',      bg: '#fed7aa', fg: '#9a3412', topping: true, emoji: '◆' },
+  finalist:   { label: 'Finalist',   bg: '#e0e7ff', fg: '#3730a3', topping: true, emoji: '🥈' },
+  winner:     { label: 'Winner',     bg: '#fef9c3', fg: '#713f12', topping: true, emoji: '🏆' },
+}
+
 export const LS_KEYS = {
   EVENTS:  'bgp_events_v1',
   SUBS:    'bgp_subs_v1',
